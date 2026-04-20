@@ -46,3 +46,7 @@ prisma/migrations/
 
 # lock files (ONLY if you want to enforce one package manager)
 # leave package-lock.json if using npm
+# local data / offline storage backups (if any)
+*.sqlite
+*.db
+data/

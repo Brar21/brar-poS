@@ -25,12 +25,10 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
   } = bill;
 
   const billNo = `INV-${bill.id}`;
-
-  const upiId = "vs21418-6@okaxis";
-  const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
-    storeName
-  )}&am=${finalTotal}&cu=INR`;
-
+  const upiId = bill?.upiId || "";
+  const upiLink = upiId
+    ? `upi://pay?pa=${upiId}&pn=${encodeURIComponent(storeName)}&am=${finalTotal}&cu=INR`
+    : "";
   // ✅ Barcode
   useEffect(() => {
     if (barcodeRef.current) {
@@ -164,10 +162,13 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
           </div>
 
           {/* QR */}
-          {paymentMethod === "UPI" && (
+          {paymentMethod === "UPI" && upiId && (
             <div className="flex flex-col items-center mt-3">
               <p>Scan & Pay</p>
               <QRCodeCanvas id="qr-code" value={upiLink} size={130} />
+              <p className="text-xs text-gray-600">
+                UPI: {upiId}
+              </p>
             </div>
           )}
 

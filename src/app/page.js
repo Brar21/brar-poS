@@ -1,26 +1,26 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import useStore from "../hooks/useStore";
 import useProducts from "../hooks/useProducts";
 import useCart from "../hooks/useCart";
 import useBills from "../hooks/useBills";
+import DeleteStoreModal from "../components/DeleteStoreModal";
 import StoreSetup from "../components/StoreSetup";
 import ProductManager from "../components/ProductManager";
 import ItemList from "../components/ItemList";
 import Cart from "../components/Cart";
 import InvoiceModal from "../components/InvoiceModal";
-import { useState } from "react";
 import BillHistory from "../components/BillHistory";
-
-import { useEffect } from "react";
+import EditStoreModal from "../components/EditStoreModal";
+import CartSheet from "../components/CartSheet";
+import InstallButton from "@/components/installButton";
+import UpdatePopup from "@/components/UpdatePopup";
 export default function Page() {
-  const { bills,saveBill } = useBills();
-
-useEffect(() => {
-  console.log("BILLS STATE:", bills);
-}, [bills]);
-  const [currentBill, setCurrentBill] = useState(null);
-  const { store, createStore, loading } = useStore();
+  const { bills, saveBill } = useBills();
+  const { store, createStore, loading, deleteStore, updateStore } = useStore();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditStore, setShowEditStore] = useState(false);
   const {
     products,
     loading: prodLoading,
@@ -28,20 +28,29 @@ useEffect(() => {
     updateProduct,
     deleteProduct,
   } = useProducts();
+
   const {
     cart,
     addToCart,
     updateQty,
-    removeItem,clearCart,
+    removeItem,
+    clearCart,
     total,
   } = useCart();
 
-  const [mode, setMode] = useState("POS"); // POS / PRODUCTS
+  const [mode, setMode] = useState("POS");
   const [discount, setDiscount] = useState(0);
   const [coupon, setCoupon] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
+
+  const [currentBill, setCurrentBill] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
+
+  useEffect(() => {
+    console.log("BILLS STATE:", bills);
+  }, [bills]);
+
   if (loading || prodLoading) {
     return <div className="p-4">Loading...</div>;
   }
@@ -49,10 +58,14 @@ useEffect(() => {
   if (!store) {
     return <StoreSetup createStore={createStore} />;
   }
+
+  // ✅ COUPON
   const applyCoupon = (code) => {
     setCoupon(code);
 
-    if (code === "SAVE10") {
+    if (code === "No-Discount") {
+      setCouponDiscount(total * 0);
+    } else if (code === "SAVE10") {
       setCouponDiscount(total * 0.1);
     } else if (code === "FLAT50") {
       setCouponDiscount(50);
@@ -63,16 +76,24 @@ useEffect(() => {
       setCouponDiscount(0);
     }
   };
+
   const finalTotal = total - discount - couponDiscount;
+
+  // ✅ CHECKOUT
   const handleCheckout = () => {
     if (cart.length === 0) {
       alert("Cart is empty");
       return;
     }
-  
+
+    if (paymentMethod === "UPI" && !store.upiId) {
+      alert("Please add UPI ID in store setup");
+      return;
+    }
+
     const billData = {
       id: Date.now(),
-      items: [...cart], // ✅ COPY cart
+      items: [...cart],
       total,
       discount,
       coupon,
@@ -80,19 +101,20 @@ useEffect(() => {
       finalTotal,
       paymentMethod,
       date: new Date().toLocaleString(),
+      upiId: store.upiId, // 💥 IMPORTANT
     };
-  
-    // ✅ SAVE BILL DATA
+
     setCurrentBill(billData);
-  
-    // ✅ SAVE TO STORAGE
     saveBill(billData);
-  
-    // ✅ OPEN INVOICE
     setShowInvoice(true);
-  
-    // ❗ DO NOT CLEAR HERE
   };
+
+  // ✅ OPEN OLD BILL FROM HISTORY
+  const openInvoice = (bill) => {
+    setCurrentBill(bill);
+    setShowInvoice(true);
+  };
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
 
@@ -101,28 +123,65 @@ useEffect(() => {
         <span>{store.name}</span>
 
         <div className="flex gap-2">
-
-<button onClick={() => setMode("POS")}>POS</button>
-<button onClick={() => setMode("PRODUCTS")}>Manage</button>
-<button onClick={() => setMode("HISTORY")}>History</button>
-
-</div>
+          <button onClick={() => setMode("POS")}>POS</button>
+          <button onClick={() => setMode("PRODUCTS")}>Manage</button>
+          <button onClick={() => setMode("HISTORY")}>History</button>
+          <button
+            onClick={() => setShowEditStore(true)}
+            className="bg-yellow-500 px-3 py-1 rounded text-black"
+          >
+            Edit UPI
+          </button>
+          {showEditStore && (
+            <EditStoreModal
+              store={store}
+              onClose={() => setShowEditStore(false)}
+              onSave={(newUpi) => {
+                updateStore({ upiId: newUpi });
+                setShowEditStore(false);
+              }}
+            />
+          )}
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="bg-red-600 px-3 py-1 rounded text-white"
+          >
+            Reset
+          </button>
+          {showDeleteModal && (
+            <DeleteStoreModal
+              onClose={() => setShowDeleteModal(false)}
+              onConfirm={async () => {
+                await deleteStore();
+                setShowDeleteModal(false);
+              }}
+            />
+          )}
+          <InstallButton />
+          <UpdatePopup />
+        </div>
       </div>
 
-  {/* SWITCH */}
-{mode === "PRODUCTS" ? (
-  <ProductManager
-    products={products}
-    addProduct={addProduct}
-    updateProduct={updateProduct}
-    deleteProduct={deleteProduct}
-  />
-) : mode === "HISTORY" ? (
-  <BillHistory bills={bills} />
-) : (
-  <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-    <ItemList products={products} addToCart={addToCart} />
+      {/* SWITCH */}
+      {mode === "PRODUCTS" ? (
+        <ProductManager
+          products={products}
+          addProduct={addProduct}
+          updateProduct={updateProduct}
+          deleteProduct={deleteProduct}
+        />
+      ) : mode === "HISTORY" ? (
+        <BillHistory bills={bills} openInvoice={openInvoice} />
+      ) : (
+        <div className="flex flex-1 overflow-hidden">
 
+  {/* LEFT - PRODUCTS */}
+  <div className="flex-1 overflow-y-auto pb-[120px] md:pb-0">
+    <ItemList products={products} addToCart={addToCart} />
+  </div>
+
+  {/* RIGHT - DESKTOP CART */}
+  <div className="hidden md:block w-[350px] border-l bg-white">
     <Cart
       cart={cart}
       updateQty={updateQty}
@@ -140,16 +199,41 @@ useEffect(() => {
       checkout={handleCheckout}
     />
   </div>
-)}
-      {showInvoice && (
-       <InvoiceModal
-       bill={currentBill}
-       storeName={store.name}
-       onClose={() => {
-         setShowInvoice(false);
-         clearCart();
-       }}
-     />
+
+  {/* MOBILE CART ONLY */}
+  <CartSheet>
+    <Cart
+      cart={cart}
+      updateQty={updateQty}
+      removeItem={removeItem}
+      total={total}
+      discount={discount}
+      setDiscount={setDiscount}
+      coupon={coupon}
+      setCoupon={setCoupon}
+      applyCoupon={applyCoupon}
+      couponDiscount={couponDiscount}
+      paymentMethod={paymentMethod}
+      setPaymentMethod={setPaymentMethod}
+      finalTotal={finalTotal}
+      checkout={handleCheckout}
+    />
+  </CartSheet>
+
+</div>
+      )}
+
+      {/* INVOICE */}
+      {showInvoice && currentBill && (
+        <InvoiceModal
+          bill={currentBill}
+          storeName={store.name}
+          onClose={() => {
+            setShowInvoice(false);
+            setCurrentBill(null);
+            clearCart(); // ✅ safe (only affects POS)
+          }}
+        />
       )}
     </div>
   );

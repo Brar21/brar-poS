@@ -17,15 +17,12 @@ export default function Cart({
 }) {
     return (
         <div className="
-      w-full md:w-1/3 
-      bg-white 
-      shadow-lg 
-      p-3 
-      flex flex-col
-      fixed md:static 
-      bottom-0 left-0 right-0 
-      h-[50%] md:h-auto
-    ">
+        w-full
+        bg-white 
+        p-4
+        flex flex-col
+        h-full
+      ">
 
             <h2 className="text-lg font-bold mb-2 text-black">
                 Cart
@@ -95,6 +92,7 @@ export default function Cart({
 
             {/* Coupons */}
             <div className="flex gap-3 mt-3">
+            <button onClick={() => applyCoupon("No-Discount")} className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm">No-Discount</button>
                 <button onClick={() => applyCoupon("UPI5")} className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm">UPI 5%</button>
                 <button onClick={() => applyCoupon("SAVE10")} className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm">SAVE10</button>
                 <button onClick={() => applyCoupon("FLAT50")} className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm">FLAT50</button>

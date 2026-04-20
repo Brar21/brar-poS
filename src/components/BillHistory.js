@@ -1,7 +1,10 @@
 "use client";
 
-export default function BillHistory({ bills }) {
-  return (
+import { useState } from "react";
+
+export default function BillHistory({ bills,openInvoice }) {
+
+return (
     <div className="p-4 bg-gray-100 min-h-screen text-black">
 
       <h2 className="text-xl font-bold mb-4 text-black">
@@ -12,7 +15,8 @@ export default function BillHistory({ bills }) {
         <p className="text-black">No bills yet</p>
       ) : (
         bills.map((bill) => (
-          <div
+          <div onClick={() => {console.log("clicked bill",bill)
+            openInvoice(bill)}}
             key={bill.id}
             className="bg-white text-black border rounded-lg p-4 mb-3 shadow"
           >
