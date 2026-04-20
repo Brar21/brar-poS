@@ -46,7 +46,16 @@ export default function Page() {
 
   const [currentBill, setCurrentBill] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
-
+  const [showIOSHint, setShowIOSHint] = useState(false);
+  useEffect(() => {
+    if (
+      /iPhone|iPad|iPod/i.test(navigator.userAgent) &&
+      !localStorage.getItem("iosHintShown")
+    ) {
+      setShowIOSHint(true);
+      localStorage.setItem("iosHintShown", "true");
+    }
+  }, []);
   useEffect(() => {
     console.log("BILLS STATE:", bills);
   }, [bills]);
@@ -78,7 +87,7 @@ export default function Page() {
   };
 
   const finalTotal = total - discount - couponDiscount;
-
+  
   // ✅ CHECKOUT
   const handleCheckout = () => {
     if (cart.length === 0) {
@@ -114,6 +123,8 @@ export default function Page() {
     setCurrentBill(bill);
     setShowInvoice(true);
   };
+
+
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
@@ -157,6 +168,12 @@ export default function Page() {
               }}
             />
           )}
+          {/* iOS Install Hint */}
+          {showIOSHint && (
+  <div className="bg-yellow-200 text-black p-2 text-center text-sm">
+    Tap Share → Add to Home Screen
+  </div>
+)}
           <InstallButton />
           <UpdatePopup />
         </div>
@@ -175,52 +192,52 @@ export default function Page() {
       ) : (
         <div className="flex flex-1 overflow-hidden">
 
-  {/* LEFT - PRODUCTS */}
-  <div className="flex-1 overflow-y-auto pb-[120px] md:pb-0">
-    <ItemList products={products} addToCart={addToCart} />
-  </div>
+          {/* LEFT - PRODUCTS */}
+          <div className="flex-1 overflow-y-auto pb-[120px] md:pb-0">
+            <ItemList products={products} addToCart={addToCart} />
+          </div>
 
-  {/* RIGHT - DESKTOP CART */}
-  <div className="hidden md:block w-[350px] border-l bg-white">
-    <Cart
-      cart={cart}
-      updateQty={updateQty}
-      removeItem={removeItem}
-      total={total}
-      discount={discount}
-      setDiscount={setDiscount}
-      coupon={coupon}
-      setCoupon={setCoupon}
-      applyCoupon={applyCoupon}
-      couponDiscount={couponDiscount}
-      paymentMethod={paymentMethod}
-      setPaymentMethod={setPaymentMethod}
-      finalTotal={finalTotal}
-      checkout={handleCheckout}
-    />
-  </div>
+          {/* RIGHT - DESKTOP CART */}
+          <div className="hidden md:block w-[350px] border-l bg-white">
+            <Cart
+              cart={cart}
+              updateQty={updateQty}
+              removeItem={removeItem}
+              total={total}
+              discount={discount}
+              setDiscount={setDiscount}
+              coupon={coupon}
+              setCoupon={setCoupon}
+              applyCoupon={applyCoupon}
+              couponDiscount={couponDiscount}
+              paymentMethod={paymentMethod}
+              setPaymentMethod={setPaymentMethod}
+              finalTotal={finalTotal}
+              checkout={handleCheckout}
+            />
+          </div>
 
-  {/* MOBILE CART ONLY */}
-  <CartSheet>
-    <Cart
-      cart={cart}
-      updateQty={updateQty}
-      removeItem={removeItem}
-      total={total}
-      discount={discount}
-      setDiscount={setDiscount}
-      coupon={coupon}
-      setCoupon={setCoupon}
-      applyCoupon={applyCoupon}
-      couponDiscount={couponDiscount}
-      paymentMethod={paymentMethod}
-      setPaymentMethod={setPaymentMethod}
-      finalTotal={finalTotal}
-      checkout={handleCheckout}
-    />
-  </CartSheet>
+          {/* MOBILE CART ONLY */}
+          <CartSheet>
+            <Cart
+              cart={cart}
+              updateQty={updateQty}
+              removeItem={removeItem}
+              total={total}
+              discount={discount}
+              setDiscount={setDiscount}
+              coupon={coupon}
+              setCoupon={setCoupon}
+              applyCoupon={applyCoupon}
+              couponDiscount={couponDiscount}
+              paymentMethod={paymentMethod}
+              setPaymentMethod={setPaymentMethod}
+              finalTotal={finalTotal}
+              checkout={handleCheckout}
+            />
+          </CartSheet>
 
-</div>
+        </div>
       )}
 
       {/* INVOICE */}

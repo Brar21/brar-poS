@@ -45,28 +45,28 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
   }, [paymentMethod]);
 
   // ✅ PDF
-  const downloadPDF = async () => {
-    const element = document.getElementById("invoice-content");
+  // const downloadPDF = async () => {
+  //   const element = document.getElementById("invoice-content");
 
-    const canvas = await html2canvas(element, {
-      backgroundColor: "#ffffff",
-      scale: 2,
-    });
+  //   const canvas = await html2canvas(element, {
+  //     backgroundColor: "#ffffff",
+  //     scale: 2,
+  //   });
 
-    const imgData = canvas.toDataURL("image/png");
+  //   const imgData = canvas.toDataURL("image/png");
 
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: [80, 200],
-    });
+  //   const pdf = new jsPDF({
+  //     orientation: "portrait",
+  //     unit: "mm",
+  //     format: [80, 200],
+  //   });
 
-    const width = 80;
-    const height = (canvas.height * width) / canvas.width;
+  //   const width = 80;
+  //   const height = (canvas.height * width) / canvas.width;
 
-    pdf.addImage(imgData, "PNG", 0, 0, width, height);
-    pdf.save(`${billNo}.pdf`);
-  };
+  //   pdf.addImage(imgData, "PNG", 0, 0, width, height);
+  //   pdf.save(`${billNo}.pdf`);
+  // };
 
   // ✅ PRINT (QR FIXED)
   const handlePrint = () => {
@@ -107,6 +107,36 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
     setTimeout(() => {
       win.print();
     }, 300);
+  };
+  const downloadPDF = async () => {
+    const element = document.getElementById("invoice-content");
+  
+    const canvas = await html2canvas(element, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+      useCORS: true,
+    });
+  
+    const imgData = canvas.toDataURL("image/png");
+  
+    // ✅ iOS fallback
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
+    if (isIOS) {
+      const newTab = window.open("");
+      newTab.document.write(`<img src="${imgData}" style="width:100%">`);
+      return;
+    }
+  
+    // normal PDF
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: [80, 200],
+    });
+  
+    pdf.addImage(imgData, "PNG", 0, 0, 80, 0);
+    pdf.save(`invoice-${Date.now()}.pdf`);
   };
 
   return (
