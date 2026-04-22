@@ -22,8 +22,8 @@ export default function useProducts() {
   };
 
   const addProduct = async (data) => {
-    if (!data.name || !data.price) {
-      alert("Enter name & price");
+    if (!data.name || !data.category || !data.price) {
+      alert("Enter name & category & price");
       return;
     }
 
@@ -32,7 +32,7 @@ export default function useProducts() {
 
     const item = {
       id: Date.now(),
-      name: data.name.trim(),
+      name: data.name.trim(), category: data.category,
       price: Number(data.price),
       createdAt: new Date().toISOString(),
     };
@@ -56,7 +56,7 @@ export default function useProducts() {
       const updated = {
         ...existing,
         name: data.name.trim(),
-        price: Number(data.price),
+        price: Number(data.price),category: data.category,
         updatedAt: new Date().toISOString(),
       };
 

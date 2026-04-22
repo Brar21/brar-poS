@@ -9,23 +9,25 @@ export default function ProductManager({
   deleteProduct,
 }) {
   const [name, setName] = useState("");
+  const [category, setCategory] = useState("")
   const [price, setPrice] = useState("");
   const [editId, setEditId] = useState(null);
-
   const handleSubmit = () => {
     if (editId) {
-      updateProduct(editId, { name, price });
+      updateProduct(editId, { name,category, price });
       setEditId(null);
     } else {
-      addProduct({ name, price });
+      addProduct({ name,category, price });
     }
 
     setName("");
+    setCategory("");
     setPrice("");
   };
 
   const handleEdit = (item) => {
     setName(item.name);
+    setCategory(item.category);
     setPrice(item.price);
     setEditId(item.id);
   };
@@ -46,7 +48,13 @@ export default function ProductManager({
           placeholder="Product Name"
           className="w-full border p-3 rounded mb-2 text-black"
         />
+        <input
+          placeholder="Category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full border p-3 rounded mb-2 text-black"
 
+        />
         <input
           type="number"
           value={price}
@@ -81,6 +89,7 @@ export default function ProductManager({
           >
             <div>
               <p className="font-medium text-black">{item.name}</p>
+              <p className="font-medium text-black">{item.category}</p>
               <p className="text-sm text-black">₹{item.price}</p>
             </div>
 
