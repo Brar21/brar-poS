@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function useCart() {
-  const [cart, setCart] = useState([]);
-
+  const [cart, setCart] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("cart");
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
   const addToCart = (item) => {
     setCart((prev) => {
       const exist = prev.find((i) => i.id === item.id);
@@ -38,6 +46,7 @@ export default function useCart() {
 
   const clearCart = () => {
     setCart([]);
+    localStorage.removeItem("cart"); // ✅ important
   };
 
   const total = cart.reduce(

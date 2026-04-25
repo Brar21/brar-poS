@@ -33,7 +33,8 @@ import Dashboard from "@/components/Dashboard";
 export default function Page({ isDemo = false }) {
   const { bills, saveBill } = useBills();
   const { store, createStore, loading, deleteStore, updateStore } = useStore();
-
+  // ✅ ADD THIS (STATE)
+  const [trialExpired, setTrialExpired] = useState(false);
   const {
     products,
     loading: prodLoading,
@@ -74,6 +75,23 @@ export default function Page({ isDemo = false }) {
   useEffect(() => {
     localStorage.setItem("mode", mode);
   }, [mode]);
+  // ✅ ADD THIS (TRIAL LOGIC)
+  useEffect(() => {
+    if (isDemo) return; // ❗ skip demo mode
+
+    const start = localStorage.getItem("trialStart");
+
+    if (!start) {
+      localStorage.setItem("trialStart", new Date().toISOString());
+    } else {
+      const daysPassed =
+        (new Date() - new Date(start)) / (1000 * 60 * 60 * 24);
+
+      if (daysPassed > 60) {
+        setTrialExpired(true);
+      }
+    }
+  }, [isDemo]);
   // ✅ ADD THIS - Demo products
   useEffect(() => {
     if (isDemo && products.length === 0) {
@@ -127,7 +145,24 @@ export default function Page({ isDemo = false }) {
   if (loading || prodLoading) {
     return <div className="p-4">Loading...</div>;
   }
+  // ✅ ADD THIS (BLOCK UI)
+  if (trialExpired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-center p-4">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">Trial Expired</h2>
+          <p className="mb-4">Your 2-month free trial has ended.</p>
 
+          <a
+            href="https://wa.me/6280849667"
+            className="bg-green-600 text-white px-5 py-3 rounded-xl"
+          >
+            Contact on WhatsApp
+          </a>
+        </div>
+      </div>
+    );
+  }
   if (!store) {
     return <StoreSetup createStore={createStore} />;
   }
@@ -139,7 +174,14 @@ export default function Page({ isDemo = false }) {
     if (code === "SAVE10") setCouponDiscount(total * 0.1);
     else if (code === "FLAT50") setCouponDiscount(50);
     else if (code === "UPI5") setCouponDiscount(total * 0.05);
-    else setCouponDiscount(0);
+
+    // 🔥 custom: number inside coupon (FEST20 = 20%)
+    else if (code.match(/\d+/)) {
+      const percent = parseInt(code.match(/\d+/)[0]);
+      setCouponDiscount((total * percent) / 100);
+    } else {
+      setCouponDiscount(0);
+    }
   };
 
   const finalTotal = total - discount - couponDiscount;
@@ -151,9 +193,7 @@ export default function Page({ isDemo = false }) {
     if (paymentMethod === "UPI" && !store.upiId) {
       return alert("Add UPI ID first");
     }
-    if (!isDemo) {
-      saveBill(billData);
-    }
+
     const billData = {
       id: Date.now(),
       items: [...cart],
@@ -168,7 +208,12 @@ export default function Page({ isDemo = false }) {
     };
 
     setCurrentBill(billData);
-    saveBill(billData);
+
+    // ✅ save only if NOT demo
+    if (!isDemo) {
+      saveBill(billData);
+    }
+
     setShowInvoice(true);
   };
 

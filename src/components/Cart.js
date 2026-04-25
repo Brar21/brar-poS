@@ -16,132 +16,178 @@ export default function Cart({
   checkout,
   finalTotal,
 }) {
-  console.log("CART DATA:", cart);
+
 
   return (
-    <div className="w-full bg-white p-4 flex flex-col h-full min-h-[300px]">
+    <div className="w-full bg-white flex flex-col h-full border-l">
 
-      {/* TITLE */}
-      <h2 className="text-lg font-bold mb-2 text-black">Cart</h2>
+  {/* HEADER */}
+  <div className="p-4 border-b">
+    <h2 className="text-xl font-bold text-black">Current Bill</h2>
+  </div>
 
-      {/* ITEMS SCROLL AREA */}
-      <div className="flex-1 overflow-y-auto min-h-[120px] space-y-2">
+  {/* ITEMS */}
+  <div className="flex-1 overflow-y-auto p-3 space-y-2">
 
-        {cart.length === 0 && (
-          <p className="text-black text-center">No items</p>
-        )}
+    {cart.length === 0 && (
+      <p className="text-gray-500 text-center mt-10">
+        No items added
+      </p>
+    )}
 
-        {cart.map((item) => (
-          <div
-            key={item.id}
-            className="flex justify-between items-center border-b pb-2"
-          >
-            <div>
-              <p className="text-black font-medium">{item.name}</p>
-              <p className="text-black text-sm">₹{item.price}</p>
-            </div>
-
-            <div className="flex items-center gap-2">
-
-              <button
-                onClick={() => updateQty(item.id, "dec")}
-                className="w-10 h-10 bg-red-500 text-white rounded text-xl"
-              >
-                -
-              </button>
-
-              <span className="text-black font-bold text-lg">
-                {item.qty}
-              </span>
-
-              <button
-                onClick={() => updateQty(item.id, "inc")}
-                className="w-10 h-10 bg-green-500 text-white rounded text-xl"
-              >
-                +
-              </button>
-            </div>
-
-            <button
-              onClick={() => removeItem(item.id)}
-              className="text-red-600 text-lg"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* BOTTOM SECTION (FIXED) */}
-      <div className="mt-auto pt-3 space-y-3">
-
-        {/* MANUAL DISCOUNT */}
-        <input
-          type="number"
-          placeholder="Enter Discount ₹"
-          value={discount}
-          onChange={(e) => setDiscount(Number(e.target.value))}
-          className="border p-2 rounded w-full text-black"
-        />
-
-        {/* COUPONS */}
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => applyCoupon("No-Discount")} className="bg-gray-500 text-white px-3 py-2 rounded-lg text-sm">
-            No-Discount
-          </button>
-          <button onClick={() => applyCoupon("UPI5")} className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm">
-            UPI 5%
-          </button>
-          <button onClick={() => applyCoupon("SAVE10")} className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm">
-            SAVE10
-          </button>
-          <button onClick={() => applyCoupon("FLAT50")} className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm">
-            FLAT50
-          </button>
-        </div>
-
-        {/* PAYMENT */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setPaymentMethod("CASH")}
-            className={`flex-1 p-3 rounded-lg text-lg ${
-              paymentMethod === "CASH"
-                ? "bg-black text-white"
-                : "bg-gray-200 text-black"
-            }`}
-          >
-            Cash
-          </button>
-
-          <button
-            onClick={() => setPaymentMethod("UPI")}
-            className={`flex-1 p-3 rounded-lg text-lg ${
-              paymentMethod === "UPI"
-                ? "bg-green-600 text-white"
-                : "bg-gray-200 text-black"
-            }`}
-          >
-            UPI
-          </button>
-        </div>
-
-        {/* TOTAL */}
-        <div className="border-t pt-2 text-black">
-          <h2 className="flex justify-between text-lg font-bold">
-            <span>Total</span>
-            <span>₹{finalTotal}</span>
-          </h2>
-        </div>
-
-        {/* CHECKOUT */}
-        <button
-          onClick={checkout}
-          className="bg-green-600 text-white p-4 rounded-xl w-full text-xl font-bold"
-        >
-          Generate Bill {finalTotal > 0 && `₹${finalTotal}`}
-        </button>
-
-      </div>
+{cart.map((item) => (
+  <div
+    key={item.id}
+    className="flex items-center justify-between bg-gray-50 p-3 text-black rounded-lg mb-2 overflow-hidden"
+  >
+    {/* LEFT - NAME */}
+    <div className="flex-1 min-w-0">
+      <p className="font-medium text-black truncate">
+        {item.name}
+      </p>
+      <p className="text-xs text-gray-500">
+        ₹{item.price}
+      </p>
     </div>
+
+    {/* RIGHT - CONTROLS */}
+    <div className="flex items-center gap-2 flex-shrink-0">
+
+    
+      {/* QTY */}
+      <span className="w-6 text-center">
+        {item.qty}
+      </span>
+
+  
+
+      {/* ❌ */}
+      <button
+        onClick={() => removeItem(item.id)}
+        className="text-red-500 text-sm ml-1"
+      >
+        ✕
+      </button>
+
+    </div>
+  </div>
+))}
+
+  </div>
+
+  {/* FOOTER */}
+  <div className="p-4 border-t space-y-3">
+{/* DISCOUNT */}
+<div>
+  <label className="text-sm text-gray-600">Discount (₹)</label>
+  <input
+    type="number"
+    value={discount}
+    onChange={(e) => setDiscount(Number(e.target.value))}
+    className="w-full border-black border text-black p-2 rounded-lg mt-1"
+    placeholder="Enter discount"
+  />
+</div>
+
+{/* COUPON */}
+<div>
+  <label className="text-sm text-gray-600">Coupon Code</label>
+  <div className="flex flex-row gap-2 mt-1">
+    <input
+      value={coupon}
+      onChange={(e) => setCoupon(e.target.value)}
+      className="flex-1 border-black border text-black p-2 rounded-lg"
+      placeholder="Enter coupon"
+    />
+  
+    <button
+      onClick={() => applyCoupon(coupon)}
+      className="bg-black text-white px-3 rounded-lg"
+    >
+      Apply
+    </button>
+  </div>
+  {/* QUICK COUPONS */}
+  <div className="flex gap-2 flex-row my-2">
+  {["SAVE10", "FLAT50", "UPI5"].map((code) => (
+    <button
+      key={code}
+      onClick={() => {
+        setCoupon(code);
+        applyCoupon(code);
+      }}
+      className="bg-gray-200 px-3 py-1 border border-black text-black rounded-full text-sm active:scale-95 active:bg-green-400 active:text-white"
+    >
+      {code}
+    </button>
+  ))}
+</div>
+  {couponDiscount > 0 && (
+    <p className="text-green-600 text-sm mt-1">
+      Coupon Applied: -₹{couponDiscount}
+    </p>
+  )}
+</div>
+    {/* PAYMENT */}
+    <div className="flex gap-2">
+      <button
+        onClick={() => setPaymentMethod("CASH")}
+        className={`flex-1 py-2 text-black rounded-xl ${
+          paymentMethod === "CASH"
+            ? "bg-black text-white"
+            : "bg-gray-200"
+        }`}
+      >
+        Cash
+      </button>
+
+      <button
+        onClick={() => setPaymentMethod("UPI")}
+        className={`flex-1 py-2 text-black rounded-xl ${
+          paymentMethod === "UPI"
+            ? "bg-green-600 text-white"
+            : "bg-gray-200"
+        }`}
+      >
+        UPI
+      </button>
+    </div>
+
+    {/* TOTAL */}
+    <div className="space-y-1 text-sm text-gray-700">
+  <div className="flex justify-between">
+    <span>Subtotal</span>
+    <span>₹{total}</span>
+  </div>
+
+  {discount > 0 && (
+    <div className="flex justify-between text-red-500">
+      <span>Discount</span>
+      <span>-₹{discount}</span>
+    </div>
+  )}
+
+  {couponDiscount > 0 && (
+    <div className="flex justify-between text-green-600">
+      <span>Coupon</span>
+      <span>-₹{couponDiscount}</span>
+    </div>
+  )}
+</div>
+
+<div className="flex justify-between text-lg font-bold text-black pt-2 border-t">
+  <span>Total</span>
+  <span>₹{finalTotal}</span>
+</div>
+    {/* CHECKOUT */}
+    <button
+      onClick={checkout}
+      className="w-full bg-green-600 text-white py-3 rounded-xl text-lg font-bold"
+    >
+      Generate Bill
+    </button>
+
+  </div>
+</div>
   );
 }
