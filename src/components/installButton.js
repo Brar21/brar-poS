@@ -3,29 +3,40 @@
 import { useEffect, useState } from "react";
 
 export default function InstallButton() {
-  const [prompt, setPrompt] = useState(null);
+  const [promptEvent, setPromptEvent] = useState(null);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
+    // Detect iOS
+    setIsIOS(
+      /iPhone|iPad|iPod/i.test(navigator.userAgent)
+    );
+
+    // Listen install event
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
-      setPrompt(e);
+      setPromptEvent(e);
     });
   }, []);
 
-  const installApp = () => {
-    if (prompt) {
-      prompt.prompt();
+  const handleInstall = async () => {
+    if (promptEvent) {
+      promptEvent.prompt();
+      await promptEvent.userChoice;
+    } else if (isIOS) {
+      alert("Tap Share → Add to Home Screen");
+    } else {
+      alert("Install not available on this browser");
     }
   };
 
-  if (!prompt) return null;
-
   return (
     <button
-      onClick={installApp}
-      className="bg-green-600 text-white px-3 py-1 rounded"
+      onClick={handleInstall}
+      className="mt-2 w-full bg-green-600 text-white p-2 rounded"
+
     >
-      Install App
+      Download App
     </button>
   );
 }

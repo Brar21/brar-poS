@@ -42,3 +42,9 @@ self.addEventListener("fetch", (event) => {
       .catch(() => caches.match(event.request))
   );
 });
+
+self.addEventListener("install", () => {
+  console.log("Service Worker Installed");
+});
+
+self.addEventListener("fetch", () => {});
