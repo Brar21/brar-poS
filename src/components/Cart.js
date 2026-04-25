@@ -53,7 +53,12 @@ export default function Cart({
     {/* RIGHT - CONTROLS */}
     <div className="flex items-center gap-2 flex-shrink-0">
 
-    
+    <button
+        onClick={() => updateQty(item.id)}
+        className="text-red-500 text-sm ml-1"
+      >
+        -
+      </button>
       {/* QTY */}
       <span className="w-6 text-center">
         {item.qty}

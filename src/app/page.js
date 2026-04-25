@@ -391,7 +391,8 @@ export default function Page({ isDemo = false }) {
           </div>
 
           {/* MOBILE CART */}
-          <CartSheet>
+          <CartSheet total={total} cart={cart}>
+            
             <Cart
               cart={cart}
               updateQty={updateQty}
