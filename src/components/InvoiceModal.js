@@ -62,18 +62,18 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
   // ✅ PRINT (QR FIXED)
   const handlePrint = () => {
     const content = ref.current.cloneNode(true);
-
+  
     const qrCanvas = content.querySelector("#qr-code");
-
+  
     if (qrCanvas && qrImage) {
       const img = document.createElement("img");
       img.src = qrImage;
       img.style.width = "130px";
       qrCanvas.parentNode.replaceChild(img, qrCanvas);
     }
-
+  
     const win = window.open("", "", "width=400,height=600");
-
+  
     win.document.write(`
       <html>
         <head>
@@ -91,12 +91,20 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
         </body>
       </html>
     `);
-
+  
     win.document.close();
     win.focus();
-
+  
+    // ✅ PRINT + AUTO CLOSE + RETURN
     setTimeout(() => {
       win.print();
+  
+      // 🔥 CRITICAL FIX (iPhone safe)
+      setTimeout(() => {
+        win.close();      // close print window
+        onClose();        // 👈 GO BACK TO POS
+      }, 1000);
+  
     }, 300);
   };
   const downloadPDF = async () => {
