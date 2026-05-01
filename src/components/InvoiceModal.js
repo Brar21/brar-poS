@@ -44,8 +44,20 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
     }
   }, [paymentMethod]);
 
+
+
+  useEffect(() => {
+    const handleFocus = () => {
+      // when user returns from print dialog
+      console.log("Returned from print");
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => window.removeEventListener("focus", handleFocus);
+  }, []);
   // ✅ PDF
-  
+
 
   // ✅ PRINT (QR FIXED)
   const handlePrint = () => {
@@ -89,31 +101,31 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
   };
   const downloadPDF = async () => {
     const element = document.getElementById("invoice-content");
-  
+
     const canvas = await html2canvas(element, {
       backgroundColor: "#ffffff",
       scale: 2,
       useCORS: true,
     });
-  
+
     const imgData = canvas.toDataURL("image/png");
-  
+
     // ✅ iOS fallback
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  
+
     if (isIOS) {
       const newTab = window.open("");
       newTab.document.write(`<img src="${imgData}" style="width:100%">`);
       return;
     }
-  
+
     // normal PDF
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "mm",
       format: [80, 200],
     });
-  
+
     pdf.addImage(imgData, "PNG", 0, 0, 80, 0);
     pdf.save(`invoice-${Date.now()}.pdf`);
   };
@@ -124,9 +136,25 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
       <div className="bg-white p-6 rounded-xl w-[360px] text-black shadow-xl">
 
         <div ref={ref} id="invoice-content" className="text-center">
-
+          <button
+            onClick={onClose}
+            className="
+    fixed top-3 right-3 z-50
+    bg-black text-white
+    px-4 py-2 rounded-full shadow-lg
+  "
+          >
+            ✕
+          </button>
           <h1 className="font-bold text-lg">{storeName}</h1>
           <p className="text-sm">Invoice</p>
+          <button
+            onClick={onClose}
+            className="bg-red-500 text-white px-3 py-1 rounded"
+          >
+            Close
+          </button>
+
 
           <p>Bill: {billNo}</p>
           <p>Date: {date}</p>
