@@ -17,26 +17,27 @@ export default function useBills() {
   // ✅ SINGLE PAYMENT FUNCTION (USED EVERYWHERE)
   const payUdhaar = (billId, amount) => {
     const updated = bills.map((b) => {
-      if (b.id !== billId) return b;
-
-      const payment = {
-        amount: Number(amount),
-        date: new Date().toISOString(),
-      };
-
-      const newPaid = (b.paidAmount || 0) + payment.amount;
-      const newDue = (b.dueAmount || 0) - payment.amount;
-
-      return {
-        ...b,
-        paidAmount: newPaid,
-        dueAmount: newDue < 0 ? 0 : newDue,
-        isCredit: newDue > 0, // ✅ auto switch
-        paymentMethod: newDue <= 0 ? "PAID" : "UDHAAR",
-        payments: [...(b.payments || []), payment],
-      };
+      if (b.id === billId && b.dueAmount > 0) {
+        const pay = Math.min(amount, b.dueAmount);
+  
+        return {
+          ...b,
+          dueAmount: b.dueAmount - pay,
+          paidAmount: (b.paidAmount || 0) + pay,
+          isCredit: b.dueAmount - pay > 0,
+          paymentMethod: b.dueAmount - pay === 0 ? "CASH" : "UDHAAR",
+          payments: [
+            ...(b.payments || []),
+            {
+              amount: pay,
+              date: new Date().toISOString(),
+            },
+          ],
+        };
+      }
+      return b;
     });
-
+  
     setBills(updated);
     localStorage.setItem("bills", JSON.stringify(updated));
   };

@@ -132,13 +132,15 @@ export default function BillHistory({ bills, openInvoice, payUdhaar }) {
         filtered.map((bill) => (
           <div
             key={bill.id}
-            onClick={() => openInvoice(bill)}
-            className="bg-white border rounded-xl p-4 mb-3 shadow active:scale-95"
+              className="bg-white border rounded-xl p-4 mb-3 shadow "
           >
             <p className="text-sm text-gray-500">{bill.date}</p>
 
-            <p className="font-bold text-lg">
-              ₹{bill.finalTotal}
+            <p className="font-bold text-lg" 
+            >
+              ₹{bill.finalTotal}<span className=" hover:text-blue-500 hover:scale-105"
+            onClick={() => openInvoice(bill)}
+            > → Full Bill</span>
             </p>
 
             <p className="text-sm">

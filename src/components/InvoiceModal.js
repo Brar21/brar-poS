@@ -5,6 +5,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
 import { QRCodeCanvas } from "qrcode.react";
+import { MessageCircleCheckIcon } from "lucide-react";
 
 export default function InvoiceModal({ bill, storeName, onClose }) {
   const ref = useRef();
@@ -38,7 +39,7 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
 
   const sendWhatsApp = () => {
     if (!bill.customerPhone) return alert("No phone number");
-  
+
     const message = `
   🧾 Bill from ${storeName}
   
@@ -47,9 +48,9 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
   
   Thank you 🙏
     `;
-  
+
     const url = `https://wa.me/${bill.customerPhone}?text=${encodeURIComponent(message)}`;
-  
+
     window.open(url, "_blank");
   };
   // ✅ Capture QR as image
@@ -78,18 +79,18 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
   // ✅ PRINT (QR FIXED)
   const handlePrint = () => {
     const content = ref.current.cloneNode(true);
-  
+
     const qrCanvas = content.querySelector("#qr-code");
-  
+
     if (qrCanvas && qrImage) {
       const img = document.createElement("img");
       img.src = qrImage;
       img.style.width = "130px";
       qrCanvas.parentNode.replaceChild(img, qrCanvas);
     }
-  
+
     const win = window.open("", "", "width=400,height=600");
-  
+
     win.document.write(`
       <html>
         <head>
@@ -107,20 +108,20 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
         </body>
       </html>
     `);
-  
+
     win.document.close();
     win.focus();
-  
+
     // ✅ PRINT + AUTO CLOSE + RETURN
     setTimeout(() => {
       win.print();
-  
+
       // 🔥 CRITICAL FIX (iPhone safe)
       setTimeout(() => {
         win.close();      // close print window
         onClose();        // 👈 GO BACK TO POS
       }, 1000);
-  
+
     }, 1000);
   };
   const downloadPDF = async () => {
@@ -173,10 +174,10 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
           <h1 className="font-bold text-lg">{storeName}</h1>
           <p className="text-sm">Invoice</p>
           <button
-            onClick={onClose}
-            className="bg-red-500 text-white px-3 py-1 rounded"
+            onClick={sendWhatsApp}
+            className="text-center bg-blue-500 text-white p-2 rounded-lg"
           >
-            Close
+   Send On WhatsApp
           </button>
 
 
@@ -236,7 +237,7 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
         </div>
 
         {/* BUTTONS */}
-        <div className="grid grid-cols-3 gap-2 mt-4">
+        <div className="grid grid-cols-3 items-center text-center gap-2 mt-4">
 
           <button
             onClick={downloadPDF}
@@ -251,15 +252,10 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
           >
             Print
           </button>
-          <button
-  onClick={sendWhatsApp}
-  className="bg-green-600 text-white py-3 rounded-lg text-lg"
->
-  Send on WhatsApp
-</button>
+        
           <button
             onClick={onClose}
-            className="bg-red-600 text-white py-3 rounded-lg text-lg"
+            className="bg-red-600 text-white py-3 rounded-lg text-lg rounded-lg"
           >
             Close
           </button>

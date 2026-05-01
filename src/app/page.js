@@ -4,12 +4,11 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu,
-  Home,
   ShoppingCart,
   Package,
   History,
   BarChart3,
-  Settings, X
+  Settings, X, MessageCircleCheckIcon,NotebookPen
 } from "lucide-react";
 import CustomerDetail from "@/components/CustomerDetail";
 import useStore from "../hooks/useStore";
@@ -155,7 +154,7 @@ export default function Page({ isDemo = false }) {
       setTimeout(() => setTourStep(1), 1000);
     }
   }, [isDemo]);
-  
+
 
   if (loading || prodLoading) {
     return <div className="p-4">Loading...</div>;
@@ -182,35 +181,47 @@ export default function Page({ isDemo = false }) {
     return <StoreSetup createStore={createStore} />;
   }
   const markPartialPaid = (phone, amount) => {
-    const updatedBills = bills.map((b) => {
+    const payAmount = Number(amount);
+  
+    if (!payAmount || payAmount <= 0) {
+      alert("Enter valid amount");
+      return;
+    }
+  
+    const updated = bills.map((b) => {
       if (b.customerPhone === phone && b.dueAmount > 0) {
-        const pay = Math.min(amount, b.dueAmount);
+  
+        const newDue = Math.max(0, b.dueAmount - payAmount);
   
         return {
           ...b,
-          dueAmount: b.dueAmount - pay,
-          paidAmount: (b.paidAmount || 0) + pay,
-          isCredit: b.dueAmount - pay > 0,
-          paymentMethod: b.dueAmount - pay === 0 ? "CASH" : "UDHAAR",
+          dueAmount: newDue,
+          paidAmount: (b.paidAmount || 0) + payAmount,
   
-          // ✅ PAYMENT HISTORY TRACK
+          // ✅ TRACK PAYMENT HISTORY
           payments: [
             ...(b.payments || []),
             {
-              amount: pay,
+              amount: payAmount,
               date: new Date().toISOString(),
             },
           ],
+  
+          // ✅ UPDATE STATUS
+          isCredit: newDue > 0,
+          paymentMethod: newDue === 0 ? "CASH" : "UDHAAR",
         };
       }
       return b;
     });
   
-    // ✅ USE HOOK SAVE (IMPORTANT)
-    localStorage.setItem("bills", JSON.stringify(updatedBills));
+    localStorage.setItem("bills", JSON.stringify(updated));
   
-    // force UI update without reload
-    setSelectedCustomer((prev) => prev ? { ...prev } : null);
+    // ❌ REMOVE THIS (causes bugs)
+    // window.location.reload();
+  
+    // ✅ Instead trigger re-render (IMPORTANT)
+    location.reload(); // if you want quick fix keep this
   };
 
 
@@ -264,8 +275,8 @@ export default function Page({ isDemo = false }) {
       paidAmount: isCredit ? 0 : finalTotal,
       dueAmount: isCredit ? finalTotal : 0,
 
-  // ✅ NEW
-  payments: [] // store partial payments here
+      // ✅ NEW
+      payments: [] // store partial payments here
     };
 
     setCurrentBill(billData);
@@ -289,7 +300,7 @@ export default function Page({ isDemo = false }) {
     { key: "POS", label: "POS", icon: <ShoppingCart size={18} /> },
     { key: "PRODUCTS", label: "Manage", icon: <Package size={18} /> },
     { key: "HISTORY", label: "History", icon: <History size={18} /> },
-    { key: "UDHAAR", label: "Udhaar", icon: <Home size={18} /> }, // ✅ ADD THIS
+    { key: "UDHAAR", label: "Udhaar", icon: <NotebookPen size={18} /> }, // ✅ ADD THIS
   ];
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
@@ -412,22 +423,22 @@ export default function Page({ isDemo = false }) {
 
       {/* CONTENT */}
       {mode === "UDHAAR" && selectedCustomer ? (
- <CustomerDetail
- bills={bills}
- phone={
-   typeof selectedCustomer === "string"
-     ? selectedCustomer
-     : selectedCustomer?.phone || ""
- }
- goBack={() => setSelectedCustomer(null)}
- markPartialPaid={markPartialPaid}
-/>
-) : mode === "UDHAAR" ? (
-  <UdhaarSummary
-    bills={bills}
-    onSelectCustomer={setSelectedCustomer}
-  />
-) : mode === "DASHBOARD" ? (
+        <CustomerDetail
+          bills={bills}
+          phone={
+            typeof selectedCustomer === "string"
+              ? selectedCustomer
+              : selectedCustomer?.phone || ""
+          }
+          goBack={() => setSelectedCustomer(null)}
+          markPartialPaid={markPartialPaid}
+        />
+      ) : mode === "UDHAAR" ? (
+        <UdhaarSummary
+          bills={bills}
+          onSelectCustomer={setSelectedCustomer}
+        />
+      ) : mode === "DASHBOARD" ? (
         <Dashboard bills={bills} />
       ) : mode === "PRODUCTS" ? (
         <ProductManager
@@ -437,7 +448,7 @@ export default function Page({ isDemo = false }) {
           deleteProduct={deleteProduct}
         />
       ) : mode === "HISTORY" ? (
-        <BillHistory bills={bills} openInvoice={openInvoice} payUdhaar={payUdhaar} 
+        <BillHistory bills={bills} openInvoice={openInvoice} payUdhaar={payUdhaar}
         />
       ) : (
         <div className="flex flex-1 overflow-hidden">
