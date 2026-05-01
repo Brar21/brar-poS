@@ -11,12 +11,12 @@ import {
   BarChart3,
   Settings, X
 } from "lucide-react";
-
+import CustomerDetail from "@/components/CustomerDetail";
 import useStore from "../hooks/useStore";
 import useProducts from "../hooks/useProducts";
 import useCart from "../hooks/useCart";
 import useBills from "../hooks/useBills";
-
+import UdhaarSummary from "@/components/UdhaarSummary";
 import DeleteStoreModal from "../components/DeleteStoreModal";
 import StoreSetup from "../components/StoreSetup";
 import ProductManager from "../components/ProductManager";
@@ -29,9 +29,12 @@ import CartSheet from "../components/CartSheet";
 import InstallButton from "@/components/installButton";
 import UpdatePopup from "@/components/UpdatePopup";
 import Dashboard from "@/components/Dashboard";
+import useCustomers from "@/hooks/useCustomers";
 
 export default function Page({ isDemo = false }) {
-  const { bills, saveBill } = useBills();
+  const { customers, addCustomer } = useCustomers();
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const { bills, saveBill, payUdhaar } = useBills();
   const { store, createStore, loading, deleteStore, updateStore } = useStore();
   // ✅ ADD THIS (STATE)
   const [trialExpired, setTrialExpired] = useState(false);
@@ -60,11 +63,13 @@ export default function Page({ isDemo = false }) {
   const [coupon, setCoupon] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
-
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [currentBill, setCurrentBill] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
   // ✅ ADD THIS
   const [tourStep, setTourStep] = useState(0);
+  const [isCredit, setIsCredit] = useState(false);
   const [mode, setMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("mode") || "POS";
@@ -75,6 +80,14 @@ export default function Page({ isDemo = false }) {
   useEffect(() => {
     localStorage.setItem("mode", mode);
   }, [mode]);
+  useEffect(() => {
+    if (isCredit) {
+      setPaymentMethod("UDHAAR");
+    }
+  }, [isCredit]);
+  useEffect(() => {
+    // trigger re-render only
+  }, [bills]);
   // ✅ ADD THIS (TRIAL LOGIC)
   useEffect(() => {
     if (isDemo) return; // ❗ skip demo mode
@@ -135,13 +148,15 @@ export default function Page({ isDemo = false }) {
 
       demoBills.forEach((b) => saveBill(b));
     }
-  }, [isDemo, products, bills]);
+  }, [isDemo, products]);
   // ✅ ADD THIS - start tour
   useEffect(() => {
     if (isDemo) {
       setTimeout(() => setTourStep(1), 1000);
     }
   }, [isDemo]);
+  
+
   if (loading || prodLoading) {
     return <div className="p-4">Loading...</div>;
   }
@@ -166,6 +181,38 @@ export default function Page({ isDemo = false }) {
   if (!store) {
     return <StoreSetup createStore={createStore} />;
   }
+  const markPartialPaid = (phone, amount) => {
+    const updatedBills = bills.map((b) => {
+      if (b.customerPhone === phone && b.dueAmount > 0) {
+        const pay = Math.min(amount, b.dueAmount);
+  
+        return {
+          ...b,
+          dueAmount: b.dueAmount - pay,
+          paidAmount: (b.paidAmount || 0) + pay,
+          isCredit: b.dueAmount - pay > 0,
+          paymentMethod: b.dueAmount - pay === 0 ? "CASH" : "UDHAAR",
+  
+          // ✅ PAYMENT HISTORY TRACK
+          payments: [
+            ...(b.payments || []),
+            {
+              amount: pay,
+              date: new Date().toISOString(),
+            },
+          ],
+        };
+      }
+      return b;
+    });
+  
+    // ✅ USE HOOK SAVE (IMPORTANT)
+    localStorage.setItem("bills", JSON.stringify(updatedBills));
+  
+    // force UI update without reload
+    setSelectedCustomer((prev) => prev ? { ...prev } : null);
+  };
+
 
   // ✅ COUPON
   const applyCoupon = (code) => {
@@ -193,7 +240,12 @@ export default function Page({ isDemo = false }) {
     if (paymentMethod === "UPI" && !store.upiId) {
       return alert("Add UPI ID first");
     }
-
+    if (customerPhone && customerPhone.length >= 5 && !isDemo) {
+      addCustomer({
+        name: customerName,
+        phone: customerPhone,
+      });
+    }
     const billData = {
       id: Date.now(),
       items: [...cart],
@@ -203,12 +255,21 @@ export default function Page({ isDemo = false }) {
       couponDiscount,
       finalTotal,
       paymentMethod,
-      date: new Date().toLocaleString(),
+      date: new Date().toISOString(), // ✅ FIXED,
       upiId: store.upiId,
+      // ✅ ADD THIS
+      customerPhone: customerPhone || "",
+      customerName: customerName || "",
+      isCredit,
+      paidAmount: isCredit ? 0 : finalTotal,
+      dueAmount: isCredit ? finalTotal : 0,
+
+  // ✅ NEW
+  payments: [] // store partial payments here
     };
 
     setCurrentBill(billData);
-
+    console.log("Saving customer:", customerName, customerPhone);
     // ✅ save only if NOT demo
     if (!isDemo) {
       saveBill(billData);
@@ -221,15 +282,15 @@ export default function Page({ isDemo = false }) {
     setCurrentBill(bill);
     setShowInvoice(true);
   };
-
+  console.log("SELECTED CUSTOMER RAW:", selectedCustomer);
   // 🎯 MENU ITEMS
   const menuItems = [
     { key: "DASHBOARD", label: "Dashboard", icon: <BarChart3 size={18} /> },
     { key: "POS", label: "POS", icon: <ShoppingCart size={18} /> },
     { key: "PRODUCTS", label: "Manage", icon: <Package size={18} /> },
     { key: "HISTORY", label: "History", icon: <History size={18} /> },
+    { key: "UDHAAR", label: "Udhaar", icon: <Home size={18} /> }, // ✅ ADD THIS
   ];
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       {/* ✅ INSTALL CTA (demo only) */}
@@ -267,7 +328,7 @@ export default function Page({ isDemo = false }) {
               {item.label}
             </button>
           ))}
-
+          {/* <button onClick={() => setMode("UDHAAR")}>Udhaar</button> */}
           <button
             onClick={() => setShowEditStore(true)}
             className="bg-yellow-500 px-3 py-1 rounded text-black"
@@ -328,7 +389,6 @@ export default function Page({ isDemo = false }) {
                   {item.label}
                 </button>
               ))}
-
               <button
                 onClick={() => setShowEditStore(true)}
                 className="mt-4 w-full bg-yellow-500 p-2 rounded"
@@ -351,7 +411,23 @@ export default function Page({ isDemo = false }) {
       </AnimatePresence>
 
       {/* CONTENT */}
-      {mode === "DASHBOARD" ? (
+      {mode === "UDHAAR" && selectedCustomer ? (
+ <CustomerDetail
+ bills={bills}
+ phone={
+   typeof selectedCustomer === "string"
+     ? selectedCustomer
+     : selectedCustomer?.phone || ""
+ }
+ goBack={() => setSelectedCustomer(null)}
+ markPartialPaid={markPartialPaid}
+/>
+) : mode === "UDHAAR" ? (
+  <UdhaarSummary
+    bills={bills}
+    onSelectCustomer={setSelectedCustomer}
+  />
+) : mode === "DASHBOARD" ? (
         <Dashboard bills={bills} />
       ) : mode === "PRODUCTS" ? (
         <ProductManager
@@ -361,7 +437,8 @@ export default function Page({ isDemo = false }) {
           deleteProduct={deleteProduct}
         />
       ) : mode === "HISTORY" ? (
-        <BillHistory bills={bills} openInvoice={openInvoice} />
+        <BillHistory bills={bills} openInvoice={openInvoice} payUdhaar={payUdhaar} 
+        />
       ) : (
         <div className="flex flex-1 overflow-hidden">
 
@@ -387,12 +464,18 @@ export default function Page({ isDemo = false }) {
               setPaymentMethod={setPaymentMethod}
               finalTotal={finalTotal}
               checkout={handleCheckout}
+              customerName={customerName}
+              setCustomerName={setCustomerName}
+              customerPhone={customerPhone}
+              setCustomerPhone={setCustomerPhone}
+              customers={customers}
+              isCredit={isCredit}
+              setIsCredit={setIsCredit}
             />
           </div>
 
           {/* MOBILE CART */}
           <CartSheet total={total} cart={cart}>
-            
             <Cart
               cart={cart}
               updateQty={updateQty}
@@ -408,6 +491,13 @@ export default function Page({ isDemo = false }) {
               setPaymentMethod={setPaymentMethod}
               finalTotal={finalTotal}
               checkout={handleCheckout}
+              customerName={customerName}
+              setCustomerName={setCustomerName}
+              customerPhone={customerPhone}
+              setCustomerPhone={setCustomerPhone}
+              customers={customers}
+              isCredit={isCredit}
+              setIsCredit={setIsCredit}
             />
           </CartSheet>
 

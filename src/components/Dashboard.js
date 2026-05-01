@@ -50,7 +50,21 @@ export default function Dashboard({ bills }) {
 
         return true;
     });
+    const today = new Date();
 
+    const isSameDay = (d1, d2) =>
+      d1.getDate() === d2.getDate() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getFullYear() === d2.getFullYear();
+    
+      const todayPaid = (bills || [])
+      .flatMap(b => b.payments || [])
+      .filter(p => {
+        const d = new Date(p.date);
+        const t = new Date();
+        return d.toDateString() === t.toDateString();
+      })
+      .reduce((s, p) => s + p.amount, 0);
     // ✅ TOTALS
     const total = filteredBills.reduce((s, b) => s + (b.finalTotal || 0), 0);
 
@@ -134,6 +148,10 @@ export default function Dashboard({ bills }) {
                     <p>UPI</p>
                     <h2>₹{upi}</h2>
                 </div>
+                <div className="bg-red-200 p-3 rounded">
+  <p>Today's Udhaar</p>
+  <h2>₹{todayUdhaar}</h2>
+</div>
             </div>
 
             {/* SALES TREND */}

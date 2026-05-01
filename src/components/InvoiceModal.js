@@ -36,6 +36,22 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
     }
   }, [billNo]);
 
+  const sendWhatsApp = () => {
+    if (!bill.customerPhone) return alert("No phone number");
+  
+    const message = `
+  🧾 Bill from ${storeName}
+  
+  Total: ₹${bill.finalTotal}
+  Payment: ${bill.paymentMethod}
+  
+  Thank you 🙏
+    `;
+  
+    const url = `https://wa.me/${bill.customerPhone}?text=${encodeURIComponent(message)}`;
+  
+    window.open(url, "_blank");
+  };
   // ✅ Capture QR as image
   useEffect(() => {
     const canvas = document.getElementById("qr-code");
@@ -105,7 +121,7 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
         onClose();        // 👈 GO BACK TO POS
       }, 1000);
   
-    }, 300);
+    }, 1000);
   };
   const downloadPDF = async () => {
     const element = document.getElementById("invoice-content");
@@ -235,7 +251,12 @@ export default function InvoiceModal({ bill, storeName, onClose }) {
           >
             Print
           </button>
-
+          <button
+  onClick={sendWhatsApp}
+  className="bg-green-600 text-white py-3 rounded-lg text-lg"
+>
+  Send on WhatsApp
+</button>
           <button
             onClick={onClose}
             className="bg-red-600 text-white py-3 rounded-lg text-lg"

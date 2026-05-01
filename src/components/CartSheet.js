@@ -5,7 +5,7 @@ import { useState } from "react";
 import Cart from "./Cart";
 export default function CartSheet({ children, cart, total }) {
   const [open, setOpen] = useState(false);
-console.log(total,"kya {",cart.length)
+
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
 
