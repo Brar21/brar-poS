@@ -21,15 +21,17 @@ export default function ItemList({ products, addToCart }) {
       ? p.category === selectedCategory
       : true;
 
+    const searchText = search.toLowerCase();
+
     const matchSearch =
-      p.name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.barcode?.toLowerCase().includes(search.toLowerCase()) ||
-      p.hsn?.toLowerCase().includes(search.toLowerCase());
+      p.name?.toLowerCase().includes(searchText) ||
+      p.barcode?.toLowerCase().includes(searchText) ||
+      p.hsn?.toLowerCase().includes(searchText);
 
     return matchCategory && matchSearch;
   });
 
-  // ✅ BARCODE SCANNER
+  // ✅ MOBILE CAMERA SCANNER
   useEffect(() => {
 
     if (!scannerOpen) return;
@@ -44,15 +46,19 @@ export default function ItemList({ products, addToCart }) {
     );
 
     scanner.render(
+
+      // SUCCESS
       (decodedText) => {
 
         setSearch(decodedText);
 
+        // ✅ AUTO FIND PRODUCT
         const found = products.find(
           (p) =>
             p.barcode?.toString() === decodedText.toString()
         );
 
+        // ✅ AUTO ADD TO CART
         if (found) {
           addToCart(found);
         }
@@ -60,6 +66,8 @@ export default function ItemList({ products, addToCart }) {
         scanner.clear();
         setScannerOpen(false);
       },
+
+      // ERROR
       () => {}
     );
 
@@ -69,8 +77,35 @@ export default function ItemList({ products, addToCart }) {
 
   }, [scannerOpen, products, addToCart]);
 
+  // ✅ BARCODE GUN SUPPORT
+  useEffect(() => {
+
+    const handleScannerGun = (e) => {
+
+      // Scanner guns press ENTER automatically
+      if (e.key === "Enter") {
+
+        const found = products.find(
+          (p) =>
+            p.barcode?.toString() === search.toString()
+        );
+
+        if (found) {
+          addToCart(found);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleScannerGun);
+
+    return () => {
+      window.removeEventListener("keydown", handleScannerGun);
+    };
+
+  }, [search, products, addToCart]);
+
   return (
-    <div className="w-full md:w-2/3 p-3 m-1 md:p-4 overflow-y-auto bg-gray-100 min-h-screen">
+    <div className="w-full md:w-2/3 p-3 md:p-4 overflow-y-auto bg-gray-100 min-h-screen">
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
@@ -109,6 +144,7 @@ export default function ItemList({ products, addToCart }) {
           "
         />
 
+        {/* CAMERA BUTTON */}
         <button
           onClick={() => setScannerOpen(true)}
           className="
@@ -219,7 +255,7 @@ export default function ItemList({ products, addToCart }) {
 
             </div>
 
-            {/* PRODUCT DETAILS */}
+            {/* DETAILS */}
             <div className="p-3">
 
               {/* NAME */}
@@ -282,6 +318,7 @@ export default function ItemList({ products, addToCart }) {
 
             </div>
 
+            {/* CAMERA SCANNER */}
             <div id="reader" />
 
           </div>
