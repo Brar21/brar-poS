@@ -26,7 +26,7 @@ const [pay,setPay]=useState("")
       </p>
 
       {/* PARTIAL PAYMENT */}
-      <input
+      {/* <input
       placeholder="Any Amount"
       type="number"
       value={pay}
@@ -40,7 +40,7 @@ const [pay,setPay]=useState("")
         className="bg-green-600 text-white px-3 py-2 rounded mb-4"
       >
         Pay {pay}
-      </button>
+      </button> */}
 
       {customerBills.map((b) => (
         <div key={b.id} className="border p-3 mb-2 rounded">
