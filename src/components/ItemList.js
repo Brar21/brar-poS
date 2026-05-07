@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 
 export default function ItemList({ products, addToCart }) {
+
   const [selectedCategory, setSelectedCategory] = useState("");
   const [search, setSearch] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   // ✅ UNIQUE CATEGORIES
   const categories = [
@@ -13,6 +16,7 @@ export default function ItemList({ products, addToCart }) {
 
   // ✅ FILTER PRODUCTS
   const filteredProducts = products.filter((p) => {
+
     const matchCategory = selectedCategory
       ? p.category === selectedCategory
       : true;
@@ -25,11 +29,52 @@ export default function ItemList({ products, addToCart }) {
     return matchCategory && matchSearch;
   });
 
+  // ✅ BARCODE SCANNER
+  useEffect(() => {
+
+    if (!scannerOpen) return;
+
+    const scanner = new Html5QrcodeScanner(
+      "reader",
+      {
+        fps: 10,
+        qrbox: 250,
+      },
+      false
+    );
+
+    scanner.render(
+      (decodedText) => {
+
+        setSearch(decodedText);
+
+        const found = products.find(
+          (p) =>
+            p.barcode?.toString() === decodedText.toString()
+        );
+
+        if (found) {
+          addToCart(found);
+        }
+
+        scanner.clear();
+        setScannerOpen(false);
+      },
+      () => {}
+    );
+
+    return () => {
+      scanner.clear().catch(() => {});
+    };
+
+  }, [scannerOpen, products, addToCart]);
+
   return (
     <div className="w-full md:w-2/3 p-3 m-1 md:p-4 overflow-y-auto bg-gray-100 min-h-screen">
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
+
         <div>
           <h2 className="text-2xl font-bold text-black">
             🛒 Products
@@ -39,17 +84,19 @@ export default function ItemList({ products, addToCart }) {
             {filteredProducts.length} Items
           </p>
         </div>
+
       </div>
 
-      {/* SEARCH */}
-      <div className="mb-4">
+      {/* SEARCH + SCANNER */}
+      <div className="flex gap-2 mb-5">
+
         <input
           type="text"
           placeholder="Search name / barcode / HSN..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="
-            w-full
+            flex-1
             bg-white
             border
             border-gray-300
@@ -61,6 +108,22 @@ export default function ItemList({ products, addToCart }) {
             focus:ring-black
           "
         />
+
+        <button
+          onClick={() => setScannerOpen(true)}
+          className="
+            bg-black
+            text-white
+            px-5
+            rounded-2xl
+            hover:scale-105
+            active:scale-95
+            transition
+          "
+        >
+          📷
+        </button>
+
       </div>
 
       {/* CATEGORY FILTER */}
@@ -90,6 +153,7 @@ export default function ItemList({ products, addToCart }) {
             {c}
           </button>
         ))}
+
       </div>
 
       {/* PRODUCTS GRID */}
@@ -123,7 +187,7 @@ export default function ItemList({ products, addToCart }) {
           >
 
             {/* PRODUCT IMAGE */}
-            <div className="relative w-full h-36 bg-gray-100 overflow-hidden">
+            <div className="relative w-full h-40 bg-gray-100 overflow-hidden">
 
               {item.image ? (
                 <img
@@ -152,6 +216,7 @@ export default function ItemList({ products, addToCart }) {
                   </span>
                 </div>
               )}
+
             </div>
 
             {/* PRODUCT DETAILS */}
@@ -172,6 +237,7 @@ export default function ItemList({ products, addToCart }) {
                 <div className="bg-black text-white text-xs px-3 py-1 rounded-full">
                   ADD
                 </div>
+
               </div>
 
               {/* BARCODE */}
@@ -189,10 +255,40 @@ export default function ItemList({ products, addToCart }) {
               )}
 
             </div>
+
           </button>
         ))}
 
       </div>
+
+      {/* ✅ SCANNER MODAL */}
+      {scannerOpen && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+
+          <div className="bg-white rounded-3xl p-4 w-full max-w-md">
+
+            <div className="flex justify-between items-center mb-3">
+
+              <h2 className="font-bold text-lg">
+                Scan Barcode
+              </h2>
+
+              <button
+                onClick={() => setScannerOpen(false)}
+                className="text-xl"
+              >
+                ✕
+              </button>
+
+            </div>
+
+            <div id="reader" />
+
+          </div>
+
+        </div>
+      )}
+
     </div>
   );
 }
