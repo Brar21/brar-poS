@@ -14,7 +14,7 @@ export default function ProductManager({
   const [price, setPrice] = useState("");
   const [barcode, setBarcode] = useState("");
   const [hsn, setHsn] = useState("");
-  const [photo, setPhoto] = useState("");
+  const [image, setImage] = useState("");
   const [editId, setEditId] = useState(null);
 
   // ✅ BARCODE SCANNER
@@ -54,7 +54,7 @@ export default function ProductManager({
       price: Number(price),
       barcode,
       hsn,
-      photo,
+      image,
     };
 
     if (editId) {
@@ -70,7 +70,7 @@ export default function ProductManager({
     setPrice("");
     setBarcode("");
     setHsn("");
-    setPhoto("");
+    setImage("");
   };
 
   // ✅ EDIT
@@ -88,7 +88,40 @@ export default function ProductManager({
       behavior: "smooth",
     });
   };
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
 
+      reader.readAsDataURL(file);
+
+      reader.onload = (event) => {
+        const img = new Image();
+
+        img.src = event.target.result;
+
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+
+          // ✅ MAX SIZE
+          const MAX_WIDTH = 600;
+          const scale = MAX_WIDTH / img.width;
+
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scale;
+
+          const ctx = canvas.getContext("2d");
+
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // ✅ COMPRESS QUALITY
+          const compressed = canvas.toDataURL("image/jpeg", 0.6);
+
+          resolve(compressed);
+        };
+      };
+    });
+  };
+  console.log(products)
   return (
     <div className="p-3">
 
@@ -159,17 +192,25 @@ export default function ProductManager({
           <input
             type="file"
             accept="image/*"
-            capture="environment"
-            onChange={handleImage}
-            className="w-full border p-2 rounded text-black"
+          className="w-full border p-3 rounded mb-2 text-black"
+
+            onChange={async (e) => {
+              const file = e.target.files[0];
+
+              if (!file) return;
+
+              const compressedImage = await compressImage(file);
+
+              setImage(compressedImage);
+            }}
           />
         </div>
 
         {/* IMAGE PREVIEW */}
-        {photo && (
+        {image && (
           <div className="mb-3">
             <img
-              src={photo}
+              src={image}
               alt="preview"
               className="w-24 h-24 object-cover rounded-lg border"
             />
@@ -207,9 +248,9 @@ export default function ProductManager({
             <div className="flex items-center gap-3">
 
               {/* PRODUCT IMAGE */}
-              {item.photo ? (
+              {item.image ? (
                 <img
-                  src={item.photo}
+                  src={item.image}
                   alt={item.name}
                   className="w-16 h-16 rounded-lg object-cover border"
                 />
