@@ -35,7 +35,7 @@ export default function ProductManager({
     const reader = new FileReader();
 
     reader.onloadend = () => {
-      setPhoto(reader.result);
+      setImage(reader.result);
     };
 
     reader.readAsDataURL(file);
@@ -80,7 +80,7 @@ export default function ProductManager({
     setPrice(item.price || "");
     setBarcode(item.barcode || "");
     setHsn(item.hsn || "");
-    setPhoto(item.photo || "");
+    setImage(item.image || "");
     setEditId(item.id);
 
     window.scrollTo({
